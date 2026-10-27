@@ -49,3 +49,9 @@ class PromptFixRequestOutput(BaseModel):
     info: str
     error: str | None = None
     changes: list[Change] = Field(default_factory=list)
+
+
+class Subscriber(BaseModel):
+    name: str
+    email: str
+    run_count: int = 0

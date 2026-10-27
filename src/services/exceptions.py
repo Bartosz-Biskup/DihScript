@@ -2,6 +2,14 @@ class ServiceException(Exception):
     ...
 
 
+class NotFoundException(ServiceException):
+    ...
+
+
+class AlreadyExistsException(ServiceException):
+    ...
+
+
 class LLMServiceException(ServiceException):
     ...
 
