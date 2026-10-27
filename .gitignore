@@ -1,0 +1,49 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Databases
+*.db
+*.sqlite3
+*.sqlite
+
+# Alembic artifacts (keep versions/, ignore nothing else by default)
+# alembic.ini and alembic/ are tracked
+
+# Test / lint / type caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# IDEs & editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Node (in case a frontend is added later)
+node_modules/
+.next/
+out/
