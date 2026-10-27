@@ -1,13 +1,25 @@
 from typing import Protocol
 
+from pydantic import BaseModel, ConfigDict, Field
+
 from repositories.models import Subscriber
 from repositories.subscriber_repository import SubscriberRepositoryProtocol
 
 from .exceptions import AlreadyExistsException, NotFoundException
 
 
+class SubscriberCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(min_length=1)
+    email: str = Field(min_length=1)
+
+
 class SubscriberServiceProtocol(Protocol):
     def add_subscriber(self, name: str, email: str) -> Subscriber:
+        ...
+
+    def get_subscriber(self, email: str) -> Subscriber:
         ...
 
     def increase_run_count(self, email: str) -> Subscriber:
@@ -25,10 +37,15 @@ class SubscriberService(SubscriberServiceProtocol):
         subscriber = Subscriber(name=name, email=email, run_count=0)
         return self._subscribers.create(subscriber)
 
-    def increase_run_count(self, email: str) -> Subscriber:
+    def get_subscriber(self, email: str) -> Subscriber:
         subscriber = self._subscribers.get_by_email(email)
         if subscriber is None:
             raise NotFoundException(f"Subscriber with email={email} not found")
+
+        return subscriber
+
+    def increase_run_count(self, email: str) -> Subscriber:
+        subscriber = self.get_subscriber(email)
 
         subscriber.run_count += 1
         self._subscribers.update(subscriber)

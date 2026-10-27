@@ -34,6 +34,23 @@ def test_add_subscriber_duplicate_email_raises():
         service.add_subscriber("Other", "anna@example.com")
 
 
+def test_get_subscriber_returns_existing():
+    repo = FakeSubscriberRepo([make_subscriber()])
+    service = build_service(repo)
+
+    found = service.get_subscriber("anna@example.com")
+
+    assert found.name == "Anna"
+    assert found.email == "anna@example.com"
+
+
+def test_get_subscriber_unknown_raises():
+    service = build_service(FakeSubscriberRepo())
+
+    with pytest.raises(NotFoundException):
+        service.get_subscriber("missing@example.com")
+
+
 def test_increase_run_count_increments():
     repo = FakeSubscriberRepo([make_subscriber()])
     service = build_service(repo)

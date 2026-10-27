@@ -1,0 +1,44 @@
+from fastapi.testclient import TestClient
+
+from api.dependencies import get_subscriber_service
+from api.main import app
+from repositories.models import Subscriber
+from services.subscriber_service import SubscriberService
+from utils import FakeSubscriberRepo
+
+
+def make_subscriber(name: str = "Anna", email: str = "anna@example.com", run_count: int = 0) -> Subscriber:
+    return Subscriber(name=name, email=email, run_count=run_count)
+
+
+def make_client(repo: FakeSubscriberRepo) -> TestClient:
+    app.dependency_overrides[get_subscriber_service] = lambda: SubscriberService(repo)
+    return TestClient(app)
+
+
+def test_add_subscriber_returns_201_with_subscriber():
+    repo = FakeSubscriberRepo()
+    client = make_client(repo)
+
+    response = client.post("/subscriber", json={"name": "Anna", "email": "anna@example.com"})
+
+    assert response.status_code == 201
+    assert response.json() == {"name": "Anna", "email": "anna@example.com", "run_count": 0}
+    assert repo.get_by_email("anna@example.com").name == "Anna"
+
+
+def test_add_subscriber_duplicate_email_returns_409():
+    repo = FakeSubscriberRepo([make_subscriber()])
+    client = make_client(repo)
+
+    response = client.post("/subscriber", json={"name": "Other", "email": "anna@example.com"})
+
+    assert response.status_code == 409
+
+
+def test_add_subscriber_empty_name_returns_422():
+    client = make_client(FakeSubscriberRepo())
+
+    response = client.post("/subscriber", json={"name": "", "email": "anna@example.com"})
+
+    assert response.status_code == 422
