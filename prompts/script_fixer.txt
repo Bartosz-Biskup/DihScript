@@ -11,7 +11,37 @@ The active mode, target length, and (for sell mode) target audience and call to 
 </role>
 
 <script_writing_guidelines>
-TODO
+Fix the script against these standards. Only change what fails them — do not rewrite for the sake of rewriting.
+
+HOOK (first 1-3 seconds)
+- Must stop the scroll. Use pattern interrupt, curiosity gap, or identity call-out.
+- Judge it by: scroll-stop power, promise clarity, and fit with the target audience (sell mode) or the broadest audience (watch mode).
+- A slow warm-up hook is the most common fix: cut it and start at the interesting moment.
+
+STRUCTURE
+- The body should follow one proven framework: Problem-Agitate-Solve, Myth-Truth-Proof, Story-Lesson-Bridge, List-Stack-Escalate, or Before-After-Bridge.
+- Restructure only if the current order hurts retention.
+- Add a micro-retention beat (pattern interrupt, visual cue, or tonal shift) every 5-8 seconds if missing.
+
+LANGUAGE
+- Use the exact words the audience uses, not industry jargon.
+- Replace generic claims with concrete numbers, timeframes, examples, or scenarios.
+- Mark delivery where it matters: [PAUSE], [SPEED UP], [WHISPER], [EMPHASISE].
+- Note where on-screen text should reinforce or contrast the spoken words.
+
+ENDING
+- watch mode: no call to action. Close the loop opened by the hook.
+- sell mode: end with the call to action from <context>, made specific and natural for the target audience. Make it feel earned, not tacked on.
+- Connect the ending back to the opening to encourage rewatches.
+
+ALGORITHM CHECKS
+- Payoff: delivered late enough to sustain viewing, early enough to prevent drop-off.
+- Comment provocation: keep or add one moment engineered to generate replies.
+- Share and save signals: keep or add identity-signalling or reference-worthy density.
+
+CHANGES
+- Every change must have a reason that names the principle it applies (e.g. "hook was a slow warm-up; replaced with a curiosity gap").
+- Keep the fixed script within the target length from <context>.
 </script_writing_guidelines>
 
 <output_format>
