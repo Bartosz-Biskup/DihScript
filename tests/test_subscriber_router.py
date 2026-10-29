@@ -44,3 +44,22 @@ def test_register_subscriber_empty_name_returns_422():
     response = client.post("/subscriber", json={"name": "", "email": "anna@example.com"})
 
     assert response.status_code == 422
+
+
+def test_register_subscriber_invalid_email_returns_422():
+    client = make_client(FakeSubscriberRepo())
+
+    response = client.post("/subscriber", json={"name": "Anna", "email": "not-an-email"})
+
+    assert response.status_code == 422
+
+
+def test_register_subscriber_normalizes_email():
+    repo = FakeSubscriberRepo()
+    client = make_client(repo)
+
+    response = client.post("/subscriber", json={"name": "Anna", "email": "anna@Example.COM"})
+
+    assert response.status_code == 201
+    assert response.json()["email"] == "anna@example.com"
+    assert repo.get_by_email("anna@example.com") is not None

@@ -63,3 +63,11 @@ def test_fix_sell_mode_without_audience_returns_422(tmp_path, monkeypatch):
     )
 
     assert response.status_code == 422
+
+
+def test_fix_invalid_email_returns_422(tmp_path, monkeypatch):
+    client = make_client(tmp_path, monkeypatch, FakeSubscriberRepo())
+
+    response = client.post("/fix", json={"email": "not-an-email", "script": "hi"})
+
+    assert response.status_code == 422

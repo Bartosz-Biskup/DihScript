@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from pydantic import Field
+from pydantic import EmailStr
 
 from repositories.models import PromptFixRequest, PromptFixRequestOutput
 
@@ -9,7 +9,7 @@ from .subscriber_service import SubscriberServiceProtocol
 
 
 class FixScriptRequest(PromptFixRequest):
-    email: str = Field(min_length=1)
+    email: EmailStr
 
 
 class FixScriptServiceProtocol(Protocol):

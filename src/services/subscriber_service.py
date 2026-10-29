@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from repositories.models import Subscriber
 from repositories.subscriber_repository import SubscriberRepositoryProtocol
@@ -12,7 +12,7 @@ class SubscriberCreate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     name: str = Field(min_length=1)
-    email: str = Field(min_length=1)
+    email: EmailStr
 
 
 class SubscriberServiceProtocol(Protocol):

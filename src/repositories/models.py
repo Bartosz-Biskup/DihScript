@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from .exceptions import ModelValidationException
 
@@ -53,5 +53,5 @@ class PromptFixRequestOutput(BaseModel):
 
 class Subscriber(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     run_count: int = 0

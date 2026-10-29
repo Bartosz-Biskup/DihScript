@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from repositories.models import Change, PromptFixRequest, PromptFixRequestOutput
 from services.fix_script_service import FixScriptRequest
@@ -15,7 +15,7 @@ class AutoRunItem(PromptFixRequest):
 
 class GroupCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
-    email: str = Field(min_length=1, max_length=255)
+    email: EmailStr
     items: list[AutoRunItem] = Field(min_length=1, max_length=1000)
 
 

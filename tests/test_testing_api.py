@@ -146,6 +146,24 @@ def test_create_group_requires_valid_items(client):
     assert test_client.post("/testing/api/groups", json=empty).status_code == 422
 
 
+def test_create_group_invalid_email_returns_422(client):
+    test_client, _, _, _ = client
+
+    bad_email = dict(GROUP_PAYLOAD, email="not-an-email")
+    response = test_client.post("/testing/api/groups", json=bad_email)
+
+    assert response.status_code == 422
+
+
+def test_manual_execute_invalid_email_returns_422(client):
+    test_client, _, _, _ = client
+
+    bad_email = dict(MANUAL_PAYLOAD, email="not-an-email")
+    response = test_client.post("/testing/api/runs", json=bad_email)
+
+    assert response.status_code == 422
+
+
 def test_group_start_runs_everything_and_finishes(client):
     test_client, service, fix, _ = client
     group = test_client.post("/testing/api/groups", json=GROUP_PAYLOAD).json()
