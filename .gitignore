@@ -20,6 +20,9 @@ dist/
 .env.*
 !.env.example
 
+# Docker (local CLI state kept inside the workspace)
+.docker-cfg/
+
 # Databases
 *.db
 *.sqlite3

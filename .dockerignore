@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+!.env.example
+.venv
+.docker-cfg
+*.pyc
+__pycache__/
+.pytest_cache/
+*.db
+todo*.md
