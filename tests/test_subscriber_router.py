@@ -16,7 +16,7 @@ def make_client(repo: FakeSubscriberRepo) -> TestClient:
     return TestClient(app)
 
 
-def test_add_subscriber_returns_201_with_subscriber():
+def test_register_subscriber_returns_201_with_subscriber():
     repo = FakeSubscriberRepo()
     client = make_client(repo)
 
@@ -27,16 +27,18 @@ def test_add_subscriber_returns_201_with_subscriber():
     assert repo.get_by_email("anna@example.com").name == "Anna"
 
 
-def test_add_subscriber_duplicate_email_returns_409():
+def test_register_subscriber_existing_email_increments_run_count():
     repo = FakeSubscriberRepo([make_subscriber()])
     client = make_client(repo)
 
     response = client.post("/subscriber", json={"name": "Other", "email": "anna@example.com"})
 
-    assert response.status_code == 409
+    assert response.status_code == 201
+    assert response.json() == {"name": "Anna", "email": "anna@example.com", "run_count": 1}
+    assert repo.get_by_email("anna@example.com").run_count == 1
 
 
-def test_add_subscriber_empty_name_returns_422():
+def test_register_subscriber_empty_name_returns_422():
     client = make_client(FakeSubscriberRepo())
 
     response = client.post("/subscriber", json={"name": "", "email": "anna@example.com"})

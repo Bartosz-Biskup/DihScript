@@ -1,7 +1,7 @@
 import pytest
 
 from repositories.models import Subscriber
-from services.exceptions import AlreadyExistsException, NotFoundException
+from services.exceptions import NotFoundException
 from services.subscriber_service import SubscriberService
 from utils import FakeSubscriberRepo
 
@@ -14,11 +14,11 @@ def build_service(repo: FakeSubscriberRepo | None = None) -> SubscriberService:
     return SubscriberService(repo or FakeSubscriberRepo())
 
 
-def test_add_subscriber_creates_with_zero_runs():
+def test_register_subscriber_creates_with_zero_runs():
     repo = FakeSubscriberRepo()
     service = build_service(repo)
 
-    created = service.add_subscriber("Anna", "anna@example.com")
+    created = service.register_subscriber("Anna", "anna@example.com")
 
     assert created.name == "Anna"
     assert created.email == "anna@example.com"
@@ -26,12 +26,25 @@ def test_add_subscriber_creates_with_zero_runs():
     assert repo.get_by_email("anna@example.com") == created
 
 
-def test_add_subscriber_duplicate_email_raises():
+def test_register_subscriber_existing_email_increments_run_count():
     repo = FakeSubscriberRepo([make_subscriber()])
     service = build_service(repo)
 
-    with pytest.raises(AlreadyExistsException):
-        service.add_subscriber("Other", "anna@example.com")
+    updated = service.register_subscriber("Other", "anna@example.com")
+
+    assert updated.name == "Anna"
+    assert updated.email == "anna@example.com"
+    assert updated.run_count == 1
+    assert repo.get_by_email("anna@example.com").run_count == 1
+
+
+def test_register_subscriber_existing_email_accumulates():
+    repo = FakeSubscriberRepo([make_subscriber(run_count=4)])
+    service = build_service(repo)
+
+    updated = service.register_subscriber("Anna", "anna@example.com")
+
+    assert updated.run_count == 5
 
 
 def test_get_subscriber_returns_existing():

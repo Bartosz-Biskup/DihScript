@@ -11,8 +11,8 @@ subscriber_router = APIRouter(prefix="/subscriber", tags=["subscriber"])
 
 
 @subscriber_router.post("", response_model=Subscriber, status_code=201)
-def add_subscriber(
+def register_subscriber(
     payload: SubscriberCreate,
     subscriber_service: Annotated[SubscriberService, Depends(get_subscriber_service)],
 ) -> Subscriber:
-    return subscriber_service.add_subscriber(payload.name, payload.email)
+    return subscriber_service.register_subscriber(payload.name, payload.email)

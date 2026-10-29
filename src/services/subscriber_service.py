@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from repositories.models import Subscriber
 from repositories.subscriber_repository import SubscriberRepositoryProtocol
 
-from .exceptions import AlreadyExistsException, NotFoundException
+from .exceptions import NotFoundException
 
 
 class SubscriberCreate(BaseModel):
@@ -16,7 +16,7 @@ class SubscriberCreate(BaseModel):
 
 
 class SubscriberServiceProtocol(Protocol):
-    def add_subscriber(self, name: str, email: str) -> Subscriber:
+    def register_subscriber(self, name: str, email: str) -> Subscriber:
         ...
 
     def get_subscriber(self, email: str) -> Subscriber:
@@ -30,9 +30,9 @@ class SubscriberService(SubscriberServiceProtocol):
     def __init__(self, subscribers: SubscriberRepositoryProtocol) -> None:
         self._subscribers = subscribers
 
-    def add_subscriber(self, name: str, email: str) -> Subscriber:
+    def register_subscriber(self, name: str, email: str) -> Subscriber:
         if self._subscribers.get_by_email(email) is not None:
-            raise AlreadyExistsException(f"Subscriber with email={email} already exists")
+            return self.increase_run_count(email)
 
         subscriber = Subscriber(name=name, email=email, run_count=0)
         return self._subscribers.create(subscriber)
