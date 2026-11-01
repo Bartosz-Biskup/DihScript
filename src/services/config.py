@@ -6,5 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MODEL: Final[str] = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
+# The OpenAI SDK (pointed at DeepSeek) takes plain model names like
+# "deepseek-chat". A legacy litellm-style "provider/model" value still works:
+# the provider prefix is stripped.
+MODEL: Final[str] = os.getenv("LLM_MODEL", "deepseek-chat").rsplit("/", 1)[-1]
 PROMPTS_DIR: Final[Path] = Path(os.getenv("PROMPTS_DIR", "prompts"))

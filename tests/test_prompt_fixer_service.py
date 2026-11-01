@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 import services.prompt_fixer_service as pfs_module
-from repositories.models import PromptFixRequest
+from repositories.models import PromptFixRequest, PromptFixRequestOutput
 from services.exceptions import InvalidModelOutputException
 from services.prompt_fixer_service import PromptFixerService
 from utils import FakeLLMClient
@@ -34,11 +34,12 @@ def _fix(tmp_path, monkeypatch, output=_VALID_OUTPUT, request=None):
 
 def test_fix_returns_output_model(tmp_path, monkeypatch):
     fake, result = _fix(tmp_path, monkeypatch)
+    assert isinstance(result, PromptFixRequestOutput)
     assert result.script == "fixed"
     assert result.info == "ok"
     assert result.error is None
     assert result.changes == []
-    assert fake.last_response_format["type"] == "json_schema"
+    assert fake.last_response_format is PromptFixRequestOutput
 
 
 def test_fix_parses_fenced_json(tmp_path, monkeypatch):

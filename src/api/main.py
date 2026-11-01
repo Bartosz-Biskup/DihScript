@@ -1,6 +1,7 @@
 from fastapi import FastAPI
+from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
-
+import logging
 from .config import CORS_ORIGINS
 from .exception_handlers import register_exception_handlers
 from .fix_router import fix_router
@@ -19,3 +20,13 @@ app.add_middleware(
 
 app.include_router(subscriber_router)
 app.include_router(fix_router)
+
+
+LOG_FILENAME: Path = Path(__file__).parent.parent.parent / "app.log"
+
+
+logging.basicConfig(
+    level="INFO",
+    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+    filename=LOG_FILENAME
+)

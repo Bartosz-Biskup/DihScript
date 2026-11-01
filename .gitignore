@@ -49,6 +49,9 @@ coverage.xml
 # Personal TODO files (not tracked)
 todo*.md
 
+# App logs
+*.log
+
 # Node (in case a frontend is added later)
 node_modules/
 .next/

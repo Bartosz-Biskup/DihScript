@@ -1,17 +1,23 @@
 from repositories.exceptions import NotFoundException
 from repositories.models import Subscriber
+from services.llm_service import LLMService
 
 
 class FakeLLMClient:
+    """Mimics LLMService.complete: parses its canned JSON into the requested
+    model (or returns the raw text when no response_format is given)."""
+
     def __init__(self, output: str = "") -> None:
         self.output = output
         self.last_prompt: str | None = None
-        self.last_response_format: dict | None = None
+        self.last_response_format = None
 
-    async def complete(self, prompt: str, response_format: dict | None = None) -> str:
+    async def complete(self, prompt: str, response_format=None):
         self.last_prompt = prompt
         self.last_response_format = response_format
-        return self.output
+        if response_format is None:
+            return self.output
+        return LLMService._parse_content(self.output, response_format)
 
 
 class FakeSubscriberRepo:
