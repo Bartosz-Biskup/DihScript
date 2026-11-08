@@ -3,7 +3,7 @@ from typing import Protocol
 from repositories.models import PromptFixRequestInput, PromptFixRequestOutput
 from services.llm_service import LLMService, LLMServiceProtocol
 
-from ..config import JUDGE_MODEL, PROMPTS_DIR
+from ..config import GROUP_SUMMARY_MAX_TOKENS, JUDGE_MAX_TOKENS, JUDGE_MODEL, PROMPTS_DIR
 
 
 class JudgeProtocol(Protocol):
@@ -31,12 +31,18 @@ class JudgeService:
                 self._tag("fixer_changes", self._changes_text(output)),
             ]
         )
-        return await self._llm.complete(prompt.replace("{{USER_CONTENT}}", user_content))
+        return await self._llm.complete(
+            prompt.replace("{{USER_CONTENT}}", user_content),
+            max_tokens=JUDGE_MAX_TOKENS,
+        )
 
     async def summarize_group(self, entries: list[str]) -> str:
         prompt = (PROMPTS_DIR / "group_summary.txt").read_text(encoding="utf-8")
         user_content = "\n\n".join(entries)
-        return await self._llm.complete(prompt.replace("{{USER_CONTENT}}", user_content))
+        return await self._llm.complete(
+            prompt.replace("{{USER_CONTENT}}", user_content),
+            max_tokens=GROUP_SUMMARY_MAX_TOKENS,
+        )
 
     @staticmethod
     def _context(request: PromptFixRequestInput) -> str:

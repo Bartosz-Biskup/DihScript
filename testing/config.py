@@ -17,5 +17,12 @@ JUDGE_MODEL: Final[str] = (
 ).rsplit("/", 1)[-1]
 DB_URL: Final[str] = os.getenv("TESTING_DB_URL") or f"sqlite:///{DATA_DIR / 'testing.db'}"
 
+# Output-token caps for the two most verbose LLM consumers. The judge prompt
+# asks for ~250 words and the group summary for ~400 words, so these caps are
+# generous headroom — lower them to spend fewer tokens, raise them if verdicts
+# start getting cut off mid-sentence.
+JUDGE_MAX_TOKENS: Final[int] = int(os.getenv("TESTING_JUDGE_MAX_TOKENS", "600"))
+GROUP_SUMMARY_MAX_TOKENS: Final[int] = int(os.getenv("TESTING_SUMMARY_MAX_TOKENS", "1200"))
+
 # Maximum number of inputs accepted in one automatic group.
 MAX_GROUP_ITEMS: Final[int] = 1000

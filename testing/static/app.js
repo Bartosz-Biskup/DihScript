@@ -217,7 +217,7 @@ function renderManual() {
     result.replaceChildren();
     try {
       const data = await api("POST", "/runs", payload);
-      result.replaceChildren(buildManualResult(data));
+      result.replaceChildren(...buildManualResult(data));
       result.scrollIntoView({ behavior: "smooth" });
     } catch (error) {
       result.replaceChildren(errorBox(error.message));
@@ -260,20 +260,18 @@ function buildManualResult(data) {
     el("div", { class: "verdict-box" }, [data.verdict || "(no verdict — fixer returned an error)"]),
   ]);
 
-  if (data.verdict) {
-    const saveBtn = el("button", { class: "primary", text: "Save to database" });
-    saveBtn.addEventListener("click", async () => {
-      saveBtn.disabled = true;
-      try {
-        const saved = await api("POST", "/runs/save", data);
-        saveBtn.replaceChildren(`Saved ✓ (run #${saved.id})`);
-      } catch (error) {
-        alert(`Save failed: ${error.message}`);
-        saveBtn.disabled = false;
-      }
-    });
-    verdictPanel.append(saveBtn);
-  }
+  const saveBtn = el("button", { class: "primary", text: "Save to database" });
+  saveBtn.addEventListener("click", async () => {
+    saveBtn.disabled = true;
+    try {
+      const saved = await api("POST", "/runs/save", data);
+      saveBtn.replaceChildren(`Saved ✓ (run #${saved.id})`);
+    } catch (error) {
+      alert(`Save failed: ${error.message}`);
+      saveBtn.disabled = false;
+    }
+  });
+  verdictPanel.append(saveBtn);
   parts.push(verdictPanel);
   return parts;
 }
