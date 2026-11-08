@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 from repositories.exceptions import (
     AlreadyExistsException as RepoAlreadyExists,
@@ -21,7 +22,7 @@ from services.exceptions import (
 
 def _handler(status_code: int, default_detail: str):
     def handle(request: Request, exc: Exception) -> JSONResponse:
-        if status_code == 500:
+        if status_code >= 500:
             return JSONResponse(status_code=status_code, content={"detail": default_detail})
 
         return JSONResponse(status_code=status_code, content={"detail": str(exc) or default_detail})
@@ -36,6 +37,7 @@ MAPPING: dict[type[Exception] | tuple[type[Exception], ...], tuple[int, str]] = 
     ValidationError: (422, "Validation error"),
     EmptyPromptException: (400, "Bad request"),
     (InvalidModelResponseException, ModelProviderException, LLMException): (502, "Model provider error"),
+    SQLAlchemyError: (503, "Database unavailable"),
     ValueError: (400, "Bad request"),
 }
 
