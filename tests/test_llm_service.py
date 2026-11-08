@@ -9,9 +9,25 @@ from repositories.models import PromptFixRequestOutput
 from services.exceptions import (
     EmptyPromptException,
     InvalidModelResponseException,
+    LLMException,
     ModelProviderException,
 )
 from services.llm_service import LLMService
+
+
+class _Message:
+    def __init__(self, content):
+        self.content = content
+
+
+class _Choice:
+    def __init__(self, content):
+        self.message = _Message(content)
+
+
+class _Completion:
+    def __init__(self, content):
+        self.choices = [_Choice(content)]
 
 
 class _FakeInstructorClient:
@@ -85,6 +101,25 @@ def test_retries_exhausted_become_invalid_model_response():
         asyncio.run(service.complete("fix this", PromptFixRequestOutput))
 
 
+def test_max_tokens_is_passed_through_for_structured_output():
+    output = PromptFixRequestOutput(script="fixed", info="ok")
+    client = _FakeInstructorClient(result=output)
+    service = make_service(client)
+
+    asyncio.run(service.complete("fix this", PromptFixRequestOutput, max_tokens=600))
+
+    assert client.calls[0]["max_tokens"] == 600
+
+
+def test_max_tokens_is_passed_through_for_free_text():
+    client = _FakeInstructorClient(result=_Completion("ok"))
+    service = make_service(client)
+
+    asyncio.run(service.complete("rate this", max_tokens=600))
+
+    assert client.calls[0]["max_tokens"] == 600
+
+
 @pytest.mark.parametrize(
     "provider_error",
     [
@@ -117,3 +152,41 @@ def test_validation_errors_from_the_client_are_not_wrapped():
 
     with pytest.raises(ValidationError):
         asyncio.run(service.complete("fix this", PromptFixRequestOutput))
+
+
+# ------------------------------------------------------------ free-text mode
+
+
+def test_free_text_returns_raw_reply():
+    client = _FakeInstructorClient(result=_Completion("solid fix, keep the hook"))
+    service = make_service(client)
+
+    result = asyncio.run(service.complete("rate this"))
+
+    assert result == "solid fix, keep the hook"
+    call = client.calls[0]
+    assert call["response_model"] is None
+
+
+def test_free_text_empty_reply_raises():
+    client = _FakeInstructorClient(result=_Completion("   "))
+    service = make_service(client)
+
+    with pytest.raises(LLMException):
+        asyncio.run(service.complete("rate this"))
+
+
+def test_free_text_without_choices_raises():
+    client = _FakeInstructorClient(result=object())  # no .choices attribute
+    service = make_service(client)
+
+    with pytest.raises(LLMException):
+        asyncio.run(service.complete("rate this"))
+
+
+def test_free_text_provider_failure_becomes_model_provider_exception():
+    client = _FakeInstructorClient(error=_bare(APIConnectionError))
+    service = make_service(client)
+
+    with pytest.raises(ModelProviderException, match="provider call failed"):
+        asyncio.run(service.complete("rate this"))
