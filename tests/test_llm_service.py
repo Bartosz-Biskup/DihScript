@@ -1,151 +1,119 @@
 import asyncio
 
 import pytest
+from instructor.core.exceptions import InstructorRetryException
+from openai import APIConnectionError, APITimeoutError, APIError
+from pydantic import ValidationError
 
 from repositories.models import PromptFixRequestOutput
 from services.exceptions import (
     EmptyPromptException,
-    EmptyResponseException,
-    InvalidModelOutputException,
-    LLMServiceException,
+    InvalidModelResponseException,
+    ModelProviderException,
 )
 from services.llm_service import LLMService
 
 
-class _Message:
-    def __init__(self, content=None, role="assistant", tool_calls=None):
-        self.content = content
-        self.role = role
-        self.tool_calls = tool_calls
+class _FakeInstructorClient:
+    """Stands in for the instructor client; records calls, returns a canned
+    result or raises a canned error."""
 
-
-class _Choice:
-    def __init__(self, message, finish_reason="stop"):
-        self.message = message
-        self.finish_reason = finish_reason
-
-
-class _Response:
-    def __init__(self, choices):
-        self.choices = choices
-
-
-class _Completions:
-    def __init__(self, responder):
-        self._responder = responder
+    def __init__(self, result=None, error=None):
+        self._result = result
+        self._error = error
         self.calls: list[dict] = []
 
     async def create(self, **kwargs):
         self.calls.append(kwargs)
-        return self._responder()
+        if self._error is not None:
+            raise self._error
+        return self._result
 
 
-class _Chat:
-    def __init__(self, completions):
-        self.completions = completions
+def make_service(client) -> LLMService:
+    # A client is injected, so no API key is needed and no network is touched.
+    return LLMService(model="deepseek-chat", client=client)
 
 
-class _FakeClient:
-    def __init__(self, responder):
-        self.chat = _Chat(_Completions(responder))
+def _bare(exception_class):
+    """An exception instance built without running its constructor.
 
-
-_VALID_JSON = '{"script": "fixed", "info": "ok", "error": null, "changes": []}'
-
-
-def make_service(responder=None) -> tuple[LLMService, _Completions]:
-    service = LLMService(model="deepseek-chat", api_key="test-key")
-    client = _FakeClient(responder or (lambda: _Response([_Choice(_Message(_VALID_JSON))])))
-    service._client = client
-    return service, client.chat.completions
+    The openai SDK exceptions require httpx2.Request objects; the tests only
+    care about the isinstance matching, so skip __init__ entirely.
+    """
+    return exception_class.__new__(exception_class)
 
 
 @pytest.mark.parametrize("bad", ["", "   ", "\n\t"])
-def test_empty_prompt_raises(bad):
-    service, _ = make_service()
-    with pytest.raises(EmptyPromptException):
-        asyncio.run(service.complete(bad, response_format=PromptFixRequestOutput))
+def test_empty_prompt_raises_without_calling_the_provider(bad):
+    client = _FakeInstructorClient(result=PromptFixRequestOutput(script="s", info="i"))
+    service = make_service(client)
+
+    with pytest.raises(EmptyPromptException, match="empty prompt"):
+        asyncio.run(service.complete(bad, PromptFixRequestOutput))
+
+    assert client.calls == []
 
 
-def test_missing_api_key_raises(monkeypatch):
+def test_missing_api_key_raises_a_clear_error(monkeypatch):
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
-    with pytest.raises(LLMServiceException, match="DEEPSEEK_API_KEY"):
-        LLMService(model="deepseek-chat", api_key=None)
+
+    with pytest.raises(ModelProviderException, match="DEEPSEEK_API_KEY"):
+        LLMService(model="deepseek-chat")
 
 
-def test_valid_json_returns_parsed_model():
-    service, completions = make_service()
+def test_valid_reply_returns_the_parsed_model():
+    output = PromptFixRequestOutput(script="fixed", info="ok")
+    client = _FakeInstructorClient(result=output)
+    service = make_service(client)
 
-    result = asyncio.run(
-        service.complete("fix this", response_format=PromptFixRequestOutput)
-    )
+    result = asyncio.run(service.complete("fix this", PromptFixRequestOutput))
 
-    assert isinstance(result, PromptFixRequestOutput)
-    assert result.script == "fixed"
-    assert result.info == "ok"
-    assert result.changes == []
-
-    call = completions.calls[0]
-    assert call["model"] == "deepseek-chat"
+    assert result is output
+    call = client.calls[0]
+    assert call["response_model"] is PromptFixRequestOutput
     assert call["messages"] == [{"role": "user", "content": "fix this"}]
-    assert call["response_format"] == {"type": "json_object"}
+    assert call["max_retries"] == 2
 
 
-def test_fenced_json_is_parsed():
-    fenced = '```json\n' + _VALID_JSON + '\n```'
-    service, _ = make_service(lambda: _Response([_Choice(_Message(fenced))]))
+def test_retries_exhausted_become_invalid_model_response():
+    error = InstructorRetryException("retries exhausted", n_attempts=3, total_usage=0)
+    client = _FakeInstructorClient(error=error)
+    service = make_service(client)
 
-    result = asyncio.run(
-        service.complete("fix this", response_format=PromptFixRequestOutput)
-    )
-
-    assert result.script == "fixed"
-
-
-def test_invalid_json_raises():
-    service, _ = make_service(lambda: _Response([_Choice(_Message("not json"))]))
-
-    with pytest.raises(InvalidModelOutputException):
-        asyncio.run(service.complete("fix this", response_format=PromptFixRequestOutput))
-
-
-def test_wrong_fields_raise_validation_error():
-    wrong = '{"script": 123, "info": "ok", "error": null, "changes": []}'
-    service, _ = make_service(lambda: _Response([_Choice(_Message(wrong))]))
-
-    with pytest.raises(InvalidModelOutputException):
-        asyncio.run(service.complete("fix this", response_format=PromptFixRequestOutput))
-
-
-def test_empty_content_raises():
-    service, _ = make_service(lambda: _Response([_Choice(_Message(""))]))
-
-    with pytest.raises(EmptyResponseException):
-        asyncio.run(service.complete("fix this", response_format=PromptFixRequestOutput))
+    with pytest.raises(InvalidModelResponseException, match="could not be parsed"):
+        asyncio.run(service.complete("fix this", PromptFixRequestOutput))
 
 
 @pytest.mark.parametrize(
-    "bad_response",
+    "provider_error",
     [
-        _Response([]),  # no choices
-        _Response([_Choice(_Message(_VALID_JSON)), _Choice(_Message(_VALID_JSON))]),
-        _Response([_Choice(_Message(_VALID_JSON), finish_reason="length")]),
-        _Response([_Choice(_Message(_VALID_JSON, role="user"))]),
-        _Response([_Choice(_Message(_VALID_JSON, tool_calls=[{"id": "t1"}]))]),
-        _Response([_Choice(_Message(None))]),  # content is None
+        _bare(APIConnectionError),
+        _bare(APITimeoutError),
+        _bare(APIError),
     ],
 )
-def test_malformed_provider_response_raises(bad_response):
-    service, _ = make_service(lambda: bad_response)
+def test_provider_failures_become_model_provider_exception(provider_error):
+    client = _FakeInstructorClient(error=provider_error)
+    service = make_service(client)
 
-    with pytest.raises((LLMServiceException, EmptyResponseException)):
-        asyncio.run(service.complete("fix this", response_format=PromptFixRequestOutput))
+    with pytest.raises(ModelProviderException, match="provider call failed"):
+        asyncio.run(service.complete("fix this", PromptFixRequestOutput))
 
 
-def test_no_response_format_returns_raw_text():
-    service, completions = make_service()
+def test_unexpected_errors_are_not_wrapped():
+    # Programming errors must stay visible instead of being relabeled as
+    # provider failures.
+    client = _FakeInstructorClient(error=RuntimeError("a bug in our code"))
+    service = make_service(client)
 
-    result = asyncio.run(service.complete("rate this"))
+    with pytest.raises(RuntimeError, match="a bug in our code"):
+        asyncio.run(service.complete("fix this", PromptFixRequestOutput))
 
-    assert result == _VALID_JSON
-    assert "response_format" not in completions.calls[0]
+
+def test_validation_errors_from_the_client_are_not_wrapped():
+    client = _FakeInstructorClient(error=ValidationError.from_exception_data("x", []))
+    service = make_service(client)
+
+    with pytest.raises(ValidationError):
+        asyncio.run(service.complete("fix this", PromptFixRequestOutput))

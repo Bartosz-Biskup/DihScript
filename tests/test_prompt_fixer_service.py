@@ -3,12 +3,17 @@ import asyncio
 import pytest
 
 import services.prompt_fixer_service as pfs_module
-from repositories.models import PromptFixRequest, PromptFixRequestOutput
-from services.exceptions import InvalidModelOutputException
+from repositories.models import PromptFixRequestInput, PromptFixRequestOutput
+from services.exceptions import InvalidModelResponseException
 from services.prompt_fixer_service import PromptFixerService
 from utils import FakeLLMClient
 
-_VALID_OUTPUT = '{"script": "fixed", "info": "ok", "error": null, "changes": []}'
+_VALID_OUTPUT = PromptFixRequestOutput(
+    script="fixed",
+    info="ok",
+    error=None,
+    changes=[]
+)
 
 _TEMPLATE = (
     "<role>ROLE TEXT</role>\n\n"
@@ -28,7 +33,7 @@ def _fix(tmp_path, monkeypatch, output=_VALID_OUTPUT, request=None):
     _setup(tmp_path, monkeypatch)
     fake = FakeLLMClient(output)
     service = PromptFixerService(fake)
-    result = asyncio.run(service.fix(request or PromptFixRequest(script="hello")))
+    result = asyncio.run(service.fix(request or PromptFixRequestInput(script="hello")))
     return fake, result
 
 
@@ -42,19 +47,8 @@ def test_fix_returns_output_model(tmp_path, monkeypatch):
     assert fake.last_response_format is PromptFixRequestOutput
 
 
-def test_fix_parses_fenced_json(tmp_path, monkeypatch):
-    fenced = '```json\n{"script": "fixed", "info": "x", "error": null, "changes": []}\n```'
-    _, result = _fix(tmp_path, monkeypatch, output=fenced)
-    assert result.script == "fixed"
-
-
-def test_fix_raises_on_invalid_output(tmp_path, monkeypatch):
-    with pytest.raises(InvalidModelOutputException):
-        _fix(tmp_path, monkeypatch, output="not json")
-
-
 def test_watch_prompt_structure(tmp_path, monkeypatch):
-    fake, _ = _fix(tmp_path, monkeypatch, request=PromptFixRequest(script="hello world"))
+    fake, _ = _fix(tmp_path, monkeypatch, request=PromptFixRequestInput(script="hello world"))
     prompt = fake.last_prompt
     assert "<role>ROLE TEXT</role>" in prompt
     assert "<security>SECURITY TEXT</security>" in prompt
@@ -68,7 +62,7 @@ def test_watch_prompt_structure(tmp_path, monkeypatch):
 
 
 def test_sell_prompt_includes_audience_and_cta(tmp_path, monkeypatch):
-    request = PromptFixRequest(
+    request = PromptFixRequestInput(
         mode="sell",
         script="hi",
         length=60,

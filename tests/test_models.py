@@ -2,24 +2,24 @@ import pytest
 from pydantic import ValidationError
 
 from repositories.exceptions import ModelValidationException
-from repositories.models import Change, PromptFixRequest, PromptFixRequestOutput
+from repositories.models import Change, PromptFixRequestInput, PromptFixRequestOutput
 
 
 def test_defaults_are_watch_and_30():
-    req = PromptFixRequest(script="hi")
+    req = PromptFixRequestInput(script="hi")
     assert req.mode == "watch"
     assert req.length == 30
 
 
 def test_sell_requires_audience_and_cta():
     with pytest.raises(ModelValidationException):
-        PromptFixRequest(mode="sell", script="hi", target_audience="coaches")
+        PromptFixRequestInput(mode="sell", script="hi", target_audience="coaches")
     with pytest.raises(ModelValidationException):
-        PromptFixRequest(mode="sell", script="hi", call_to_action="follow me")
+        PromptFixRequestInput(mode="sell", script="hi", call_to_action="follow me")
 
 
 def test_sell_accepts_both():
-    req = PromptFixRequest(
+    req = PromptFixRequestInput(
         mode="sell",
         script="hi",
         target_audience="new coaches",
@@ -30,30 +30,30 @@ def test_sell_accepts_both():
 
 
 def test_watch_mode_nulls_audience_and_cta():
-    req = PromptFixRequest(mode="watch", script="hi", target_audience="x", call_to_action="y")
+    req = PromptFixRequestInput(mode="watch", script="hi", target_audience="x", call_to_action="y")
     assert req.target_audience is None
     assert req.call_to_action is None
 
 
 def test_whitespace_only_script_rejected():
     with pytest.raises(ValidationError):
-        PromptFixRequest(script="   ")
+        PromptFixRequestInput(script="   ")
 
 
 def test_whitespace_audience_rejected_in_sell():
     with pytest.raises(ModelValidationException):
-        PromptFixRequest(mode="sell", script="hi", target_audience="   ", call_to_action="x")
+        PromptFixRequestInput(mode="sell", script="hi", target_audience="   ", call_to_action="x")
 
 
 @pytest.mark.parametrize("bad_length", [15, 45, 120, "30"])
 def test_invalid_length_rejected(bad_length):
     with pytest.raises(ValidationError):
-        PromptFixRequest(script="hi", length=bad_length)
+        PromptFixRequestInput(script="hi", length=bad_length)
 
 
 def test_invalid_mode_rejected():
     with pytest.raises(ValidationError):
-        PromptFixRequest(mode="other", script="hi")
+        PromptFixRequestInput(mode="other", script="hi")
 
 
 def test_change_rejects_end_before_start():

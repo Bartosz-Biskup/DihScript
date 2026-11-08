@@ -1,27 +1,34 @@
 from typing import Protocol
 
-from repositories.models import PromptFixRequest, PromptFixRequestOutput
+from repositories.models import PromptFixRequestInput, PromptFixRequestOutput
 
 from .config import PROMPTS_DIR
 from .llm_service import LLMServiceProtocol
 
 
 class PromptFixerServiceProtocol(Protocol):
-    async def fix(self, request: PromptFixRequest) -> PromptFixRequestOutput:
+    async def fix(self, request: PromptFixRequestInput) -> PromptFixRequestOutput:
         ...
 
 
 class PromptFixerService:
+    """Builds the fixer prompt and delegates to the LLM layer.
+
+    LLM failures (ModelProviderException, InvalidModelResponseException,
+    EmptyPromptException) are left untouched so the caller always sees the
+    reason as raised by the layer that knows it.
+    """
+
     def __init__(self, llm: LLMServiceProtocol) -> None:
         self._llm = llm
 
-    async def fix(self, request: PromptFixRequest) -> PromptFixRequestOutput:
+    async def fix(self, request: PromptFixRequestInput) -> PromptFixRequestOutput:
         return await self._llm.complete(
             self._build_prompt(request),
             response_format=PromptFixRequestOutput,
         )
 
-    def _build_prompt(self, request: PromptFixRequest) -> str:
+    def _build_prompt(self, request: PromptFixRequestInput) -> str:
         template = (PROMPTS_DIR / "script_fixer.txt").read_text(encoding="utf-8")
 
         params = [f"<mode>{request.mode}</mode>", f"<length>{request.length}</length>"]

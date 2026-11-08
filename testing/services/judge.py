@@ -1,13 +1,13 @@
 from typing import Protocol
 
-from repositories.models import PromptFixRequest, PromptFixRequestOutput
+from repositories.models import PromptFixRequestInput, PromptFixRequestOutput
 from services.llm_service import LLMService, LLMServiceProtocol
 
 from ..config import JUDGE_MODEL, PROMPTS_DIR
 
 
 class JudgeProtocol(Protocol):
-    async def judge(self, request: PromptFixRequest, output: PromptFixRequestOutput) -> str:
+    async def judge(self, request: PromptFixRequestInput, output: PromptFixRequestOutput) -> str:
         ...
 
     async def summarize_group(self, verdicts: list[str]) -> str:
@@ -20,7 +20,7 @@ class JudgeService:
     def __init__(self, llm: LLMServiceProtocol | None = None) -> None:
         self._llm = llm or LLMService(model=JUDGE_MODEL)
 
-    async def judge(self, request: PromptFixRequest, output: PromptFixRequestOutput) -> str:
+    async def judge(self, request: PromptFixRequestInput, output: PromptFixRequestOutput) -> str:
         prompt = (PROMPTS_DIR / "judge.txt").read_text(encoding="utf-8")
         user_content = "\n\n".join(
             [
@@ -39,7 +39,7 @@ class JudgeService:
         return await self._llm.complete(prompt.replace("{{USER_CONTENT}}", user_content))
 
     @staticmethod
-    def _context(request: PromptFixRequest) -> str:
+    def _context(request: PromptFixRequestInput) -> str:
         params = [f"<mode>{request.mode}</mode>", f"<length>{request.length}</length>"]
         if request.mode == "sell":
             params.append(f"<target_audience>{request.target_audience}</target_audience>")

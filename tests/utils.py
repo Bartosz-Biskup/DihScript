@@ -1,24 +1,34 @@
+from typing import TypeVar
+from pydantic import BaseModel
 from repositories.exceptions import NotFoundException
 from repositories.models import Subscriber
 from services.llm_service import LLMService
+from services.exceptions import ModelProviderException
+
+
+OutputFormat = TypeVar("OutputFormat", bound=BaseModel)
 
 
 class FakeLLMClient:
     """Mimics LLMService.complete: parses its canned JSON into the requested
     model (or returns the raw text when no response_format is given)."""
 
-    def __init__(self, output: str = "") -> None:
+    def __init__(self, output: OutputFormat) -> None:
         self.output = output
         self.last_prompt: str | None = None
         self.last_response_format = None
 
-    async def complete(self, prompt: str, response_format=None):
+    async def complete(self, prompt: str, response_format: OutputFormat) -> OutputFormat:
         self.last_prompt = prompt
         self.last_response_format = response_format
-        if response_format is None:
-            return self.output
-        return LLMService._parse_content(self.output, response_format)
 
+        return self.output
+
+
+class LLMServiceThatRaises():
+    async def complete(self, prompt: str, response_format: OutputFormat) -> OutputFormat:
+        raise ModelProviderException("The model provider is unreachable.")
+        
 
 class FakeSubscriberRepo:
     def __init__(self, subscribers: list[Subscriber] | None = None) -> None:

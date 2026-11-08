@@ -13,4 +13,4 @@ COPY src /app/src
 
 EXPOSE 80
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn api.main:app --app-dir src --host 0.0.0.0 --port 80"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn api.main:app --app-dir src --host 0.0.0.0 --port 80 --reload"]

@@ -46,7 +46,9 @@ class SubscriberRepository(SubscriberRepositoryProtocol):
     def update(self, subscriber: Subscriber) -> None:
         orm_subscriber = self._session.get(SubscriberTable, subscriber.email)
         if orm_subscriber is None:
-            raise NotFoundException(f"Subscriber with email={subscriber.email} not found")
+            raise NotFoundException(
+                f"No subscriber with email '{subscriber.email}' is registered."
+            )
 
         orm_subscriber.name = subscriber.name
         orm_subscriber.run_count = subscriber.run_count

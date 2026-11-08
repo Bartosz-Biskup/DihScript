@@ -40,7 +40,7 @@ class SubscriberService(SubscriberServiceProtocol):
     def get_subscriber(self, email: str) -> Subscriber:
         subscriber = self._subscribers.get_by_email(email)
         if subscriber is None:
-            raise NotFoundException(f"Subscriber with email={email} not found")
+            raise NotFoundException(f"No subscriber with email '{email}' is registered.")
 
         return subscriber
 

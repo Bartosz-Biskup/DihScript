@@ -11,9 +11,9 @@ from repositories.exceptions import (
 from services.exceptions import (
     AlreadyExistsException as ServiceAlreadyExists,
     EmptyPromptException,
-    EmptyResponseException,
-    InvalidModelOutputException,
-    LLMServiceException,
+    InvalidModelResponseException,
+    LLMException,
+    ModelProviderException,
     NotFoundException as ServiceNotFound,
     ServiceException,
 )
@@ -35,7 +35,7 @@ MAPPING: dict[type[Exception] | tuple[type[Exception], ...], tuple[int, str]] = 
     ModelValidationException: (422, "Validation error"),
     ValidationError: (422, "Validation error"),
     EmptyPromptException: (400, "Bad request"),
-    (InvalidModelOutputException, EmptyResponseException, LLMServiceException): (502, "LLM provider error"),
+    (InvalidModelResponseException, ModelProviderException, LLMException): (502, "Model provider error"),
     ValueError: (400, "Bad request"),
 }
 

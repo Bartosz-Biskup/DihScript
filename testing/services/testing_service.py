@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import func
 
 from repositories.models import PromptFixRequestOutput
-from services.fix_script_service import FixScriptRequest
+from services.fix_facade import FixRequest
 
 from ..database import Database
 from ..schemas import (
@@ -222,8 +222,8 @@ class TestingService:
         )
 
     @staticmethod
-    def _request_from_row(row: TestRunTable, email: str) -> FixScriptRequest:
-        return FixScriptRequest(
+    def _request_from_row(row: TestRunTable, email: str) -> FixRequest:
+        return FixRequest(
             email=email,
             mode=row.mode,
             script=row.script,

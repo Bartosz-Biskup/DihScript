@@ -3,7 +3,7 @@ from typing import Protocol
 import httpx
 
 from repositories.models import PromptFixRequestOutput
-from services.fix_script_service import FixScriptRequest
+from services.fix_facade import FixRequest
 
 
 class FixApiException(Exception):
@@ -11,7 +11,7 @@ class FixApiException(Exception):
 
 
 class FixApiClientProtocol(Protocol):
-    async def fix(self, request: FixScriptRequest) -> PromptFixRequestOutput:
+    async def fix(self, request: FixRequest) -> PromptFixRequestOutput:
         ...
 
 
@@ -22,7 +22,7 @@ class FixApiClient:
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
 
-    async def fix(self, request: FixScriptRequest) -> PromptFixRequestOutput:
+    async def fix(self, request: FixRequest) -> PromptFixRequestOutput:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.post(f"{self._base_url}/fix", json=request.model_dump())
 

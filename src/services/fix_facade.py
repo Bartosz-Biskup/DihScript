@@ -2,22 +2,22 @@ from typing import Protocol
 
 from pydantic import EmailStr
 
-from repositories.models import PromptFixRequest, PromptFixRequestOutput
+from repositories.models import PromptFixRequestInput, PromptFixRequestOutput
 
 from .prompt_fixer_service import PromptFixerServiceProtocol
 from .subscriber_service import SubscriberServiceProtocol
 
 
-class FixScriptRequest(PromptFixRequest):
+class FixRequest(PromptFixRequestInput):
     email: EmailStr
 
 
-class FixScriptServiceProtocol(Protocol):
-    async def fix_script(self, request: FixScriptRequest) -> PromptFixRequestOutput:
+class FixFacadeProtocol(Protocol):
+    async def fix(self, request: FixRequest) -> PromptFixRequestOutput:
         ...
 
 
-class FixScriptService(FixScriptServiceProtocol):
+class FixFacade(FixFacadeProtocol):
     def __init__(
         self,
         fixer: PromptFixerServiceProtocol,
@@ -26,7 +26,7 @@ class FixScriptService(FixScriptServiceProtocol):
         self._fixer = fixer
         self._subscribers = subscribers
 
-    async def fix_script(self, request: FixScriptRequest) -> PromptFixRequestOutput:
+    async def fix(self, request: FixRequest) -> PromptFixRequestOutput:
         self._subscribers.get_subscriber(request.email)
 
         output = await self._fixer.fix(request)

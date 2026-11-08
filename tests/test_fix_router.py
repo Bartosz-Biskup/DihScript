@@ -1,15 +1,20 @@
 from fastapi.testclient import TestClient
 
 import services.prompt_fixer_service as pfs_module
-from api.dependencies import get_fix_script_service
+from api.dependencies import get_fix_facade
 from api.main import app
-from repositories.models import Subscriber
-from services.fix_script_service import FixScriptService
+from repositories.models import Subscriber, PromptFixRequestOutput
+from services.fix_facade import FixFacade
 from services.prompt_fixer_service import PromptFixerService
 from services.subscriber_service import SubscriberService
 from utils import FakeLLMClient, FakeSubscriberRepo
 
-_VALID_OUTPUT = '{"script": "fixed", "info": "ok", "error": null, "changes": []}'
+_VALID_OUTPUT = PromptFixRequestOutput(
+    script="fixed",
+    info="ok",
+    error=None,
+    changes=[]
+)
 
 _TEMPLATE = (
     "<role>ROLE</role>\n\n"
@@ -29,8 +34,8 @@ def make_client(tmp_path, monkeypatch, repo: FakeSubscriberRepo) -> TestClient:
     monkeypatch.setattr(pfs_module, "PROMPTS_DIR", tmp_path)
 
     fixer = PromptFixerService(FakeLLMClient(_VALID_OUTPUT))
-    service = FixScriptService(fixer, SubscriberService(repo))
-    app.dependency_overrides[get_fix_script_service] = lambda: service
+    service = FixFacade(fixer, SubscriberService(repo))
+    app.dependency_overrides[get_fix_facade] = lambda: service
     return TestClient(app)
 
 

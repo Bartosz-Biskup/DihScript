@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from database.database import Database
 from repositories.subscriber_repository import SubscriberRepository
-from services.fix_script_service import FixScriptService
+from services.fix_facade import FixFacade
 from services.llm_service import LLMService
 from services.prompt_fixer_service import PromptFixerService
 from services.subscriber_service import SubscriberService
@@ -28,8 +28,8 @@ def get_prompt_fixer_service() -> PromptFixerService:
     return PromptFixerService(LLMService())
 
 
-def get_fix_script_service(
+def get_fix_facade(
     fixer: PromptFixerService = Depends(get_prompt_fixer_service),
     subscribers: SubscriberService = Depends(get_subscriber_service),
-) -> FixScriptService:
-    return FixScriptService(fixer, subscribers)
+) -> FixFacade:
+    return FixFacade(fixer, subscribers)

@@ -7,7 +7,7 @@ from .exceptions import ModelValidationException
 Length = Literal[30, 60, 90]
 
 
-class PromptFixRequest(BaseModel):
+class PromptFixRequestInput(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     mode: Literal["watch", "sell"] = "watch"
@@ -25,7 +25,9 @@ class PromptFixRequest(BaseModel):
                 if not getattr(self, name)
             ]
             if missing:
-                raise ModelValidationException(f"required in sell mode: {', '.join(missing)}")
+                raise ModelValidationException(
+                    f"In sell mode the following fields are required: {', '.join(missing)}."
+                )
         else:
             self.target_audience = None
             self.call_to_action = None
@@ -40,7 +42,10 @@ class Change(BaseModel):
     @model_validator(mode="after")
     def _check_bounds(self):
         if self.end_char < self.start_char:
-            raise ModelValidationException("end_char must be greater than or equal to start_char")
+            raise ModelValidationException(
+                f"Invalid change offsets: start_char={self.start_char} must not be "
+                f"greater than end_char={self.end_char}."
+            )
         return self
 
 

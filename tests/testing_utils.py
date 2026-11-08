@@ -1,5 +1,5 @@
 from repositories.models import Change, PromptFixRequestOutput
-from services.fix_script_service import FixScriptRequest
+from services.fix_facade import FixRequest
 
 
 def make_output(
@@ -20,9 +20,9 @@ class FakeFixClient:
 
     def __init__(self, responses: list | None = None) -> None:
         self._responses = list(responses or [])
-        self.calls: list[FixScriptRequest] = []
+        self.calls: list[FixRequest] = []
 
-    async def fix(self, request: FixScriptRequest) -> PromptFixRequestOutput:
+    async def fix(self, request: FixRequest) -> PromptFixRequestOutput:
         self.calls.append(request)
         if self._responses:
             response = self._responses.pop(0)

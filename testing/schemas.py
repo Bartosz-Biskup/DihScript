@@ -3,13 +3,13 @@ from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
-from repositories.models import Change, PromptFixRequest, PromptFixRequestOutput
-from services.fix_script_service import FixScriptRequest
+from repositories.models import Change, PromptFixRequestInput, PromptFixRequestOutput
+from services.fix_facade import FixRequest
 
 Status = Literal["pending", "running", "done", "failed"]
 
 
-class AutoRunItem(PromptFixRequest):
+class AutoRunItem(PromptFixRequestInput):
     """One input of an automatic group: everything except the email (group-level)."""
 
 
@@ -19,7 +19,7 @@ class GroupCreateRequest(BaseModel):
     items: list[AutoRunItem] = Field(min_length=1, max_length=1000)
 
 
-class ManualExecuteRequest(FixScriptRequest):
+class ManualExecuteRequest(FixRequest):
     """Full body of the real POST /fix endpoint."""
 
 
