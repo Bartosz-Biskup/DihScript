@@ -6,6 +6,7 @@ from .config import CORS_ORIGINS
 from .exception_handlers import register_exception_handlers
 from .fix_router import fix_router
 from .subscriber_router import subscriber_router
+from .rate_limiter import set_up_rate_limiting
 
 app = FastAPI()
 register_exception_handlers(app)
@@ -17,6 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=False,
 )
+
+set_up_rate_limiting(app)
 
 app.include_router(subscriber_router)
 app.include_router(fix_router)
