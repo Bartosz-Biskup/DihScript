@@ -1,15 +1,9 @@
 from typing import Protocol
 
-from pydantic import EmailStr
-
-from repositories.models import PromptFixRequestInput, PromptFixRequestOutput
+from repositories.models import FixRequest, PromptFixRequestOutput
 
 from .prompt_fixer_service import PromptFixerServiceProtocol
 from .subscriber_service import SubscriberServiceProtocol
-
-
-class FixRequest(PromptFixRequestInput):
-    email: EmailStr
 
 
 class FixFacadeProtocol(Protocol):

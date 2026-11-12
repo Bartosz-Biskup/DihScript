@@ -1,5 +1,4 @@
 from fastapi.testclient import TestClient
-
 from api.dependencies import get_subscriber_service
 from api.main import app
 from repositories.models import Subscriber

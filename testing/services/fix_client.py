@@ -2,8 +2,7 @@ from typing import Protocol
 
 import httpx
 
-from repositories.models import PromptFixRequestOutput
-from services.fix_facade import FixRequest
+from repositories.models import FixRequest, PromptFixRequestOutput
 
 
 class FixApiException(Exception):

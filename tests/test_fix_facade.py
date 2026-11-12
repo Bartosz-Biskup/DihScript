@@ -3,9 +3,9 @@ import asyncio
 import pytest
 
 import services.prompt_fixer_service as pfs_module
-from repositories.models import Subscriber, PromptFixRequestOutput
+from repositories.models import FixRequest, Subscriber, PromptFixRequestOutput
 from services.exceptions import ModelProviderException, NotFoundException
-from services.fix_facade import FixRequest, FixFacade
+from services.fix_facade import FixFacade
 from services.prompt_fixer_service import PromptFixerService
 from services.subscriber_service import SubscriberService
 from utils import FakeLLMClient, LLMServiceThatRaises, FakeSubscriberRepo

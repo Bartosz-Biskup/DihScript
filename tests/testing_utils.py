@@ -1,5 +1,4 @@
-from repositories.models import Change, PromptFixRequestOutput
-from services.fix_facade import FixRequest
+from repositories.models import Change, FixRequest, PromptFixRequestOutput
 
 
 def make_output(

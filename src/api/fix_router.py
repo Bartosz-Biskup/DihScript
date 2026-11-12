@@ -1,16 +1,15 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request
-
-from repositories.models import PromptFixRequestOutput
-from services.fix_facade import FixFacade, FixRequest
+from repositories.models import FixRequest, PromptFixRequestOutput
+from services.fix_facade import FixFacade
 from .dependencies import get_fix_facade
-from .rate_limiter import limiter
+from .rate_limiter import limiter, CONFIG
 
 fix_router = APIRouter(prefix="/fix", tags=["fix"])
 
 
 @fix_router.post("", response_model=PromptFixRequestOutput)
-@limiter.limit("20/hour")
+@limiter.limit(CONFIG.get("fix_router").get_limiter_config_in_slowapi_format())
 async def fix_script(
     request: Request,
     payload: FixRequest,

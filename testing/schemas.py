@@ -3,8 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
-from repositories.models import Change, PromptFixRequestInput, PromptFixRequestOutput
-from services.fix_facade import FixRequest
+from repositories.models import Change, FixRequest, PromptFixRequestInput, PromptFixRequestOutput
 
 Status = Literal["pending", "running", "done", "failed"]
 

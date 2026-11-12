@@ -34,6 +34,12 @@ class PromptFixRequestInput(BaseModel):
         return self
 
 
+class FixRequest(PromptFixRequestInput):
+    """The public /fix request: the fixer input plus the subscriber email."""
+
+    email: EmailStr
+
+
 class Change(BaseModel):
     start_char: int = Field(ge=0)
     end_char: int = Field(ge=0)

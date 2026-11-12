@@ -2,7 +2,6 @@ from typing import TypeVar
 from pydantic import BaseModel
 from repositories.exceptions import NotFoundException
 from repositories.models import Subscriber
-from services.llm_service import LLMService
 from services.exceptions import ModelProviderException
 
 

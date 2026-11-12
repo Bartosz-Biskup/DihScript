@@ -3,8 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import func
 
-from repositories.models import PromptFixRequestOutput
-from services.fix_facade import FixRequest
+from repositories.models import FixRequest, PromptFixRequestOutput
 
 from ..database import Database
 from ..schemas import (
